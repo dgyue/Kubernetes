@@ -1,0 +1,20 @@
+# Kubernetes Helm
+
+## Helm基础
+
+​	Helm把Kubernetes的资源打包到一个Chart中，并将制作、测试完成的各个Chart保存到仓库进行存储和分发。Helm还实现了可配置的发布，它支持应用配置的版本管理，简化了Kubernetes部署应用的版本控制、打包、发布、删除、更新等操作，它有以下几个概念。
+
+- Chart：即一个Helm程序包，它包含了运行一个Kubernetes应用所需要的镜像、依赖关系和资源定义等。
+- Repository：集中存储和分发的Chart的仓库。
+- Config：Chart实例化安装运行时使用的配置信息。
+- Release：Chart实例化配置后运行于Kubernetes集群中的一个应用实例；在同一个集群上，一个Chart可以使用不同的Config重复安装多次，每次安装都会创建一个新的release。
+
+因此，Chart更像是存储在Kubernetes集群之外的程序，它的每次安装是指集群中使用专用配置运行的一个实例，执行过程有点儿类似于在操作系统上基于程序启动一个进程。
+
+​	通常，用户在Helm客户端本地遵循其格式编写Chart文件，而后即可部署在Kubernetes集群上，运行为一个特定的release。仅在有分发需求时，才应该把同一应用的Chart文件打包成归档压缩格式提交到特定的Chart仓库。仓库可以运行为公共托管平台，也可以是用户自建的服务器，仅供特定的组织或个人使用。
+
+​	目前，Helm的主流可用版本主要有v2和v3两个。版本v2中，Helm主要由与用户交互的客户端、与Kubernetes API交互的服务端Tiller和Chart仓库（repository）组成。Helm客户端是一个命令行工具，采用Go语言开发，它主要负责本地Chart开发、管理Chart仓库，以及基于gRPC协议与Tiller交互，从而完成应用部署、查询等管理任务。而Tiller服务器则托管运行在Kubernetes上，负责接受Helm客户端请求、将Chart转换为最终配置生成一个release，随后部署、跟踪以及管理各release等功能。
+
+​	版本v2进化到版本v3的过程中，Helm客户端基本保持了原貌，但肩负重要任务的服务端组件Tiller被移除，取而代之是专用的CRD资源。换句话说，版本v3的Helm使用CRD将release直接保存到Kubernetes之上，且无须再跟踪各release状态，而将Chart渲染成release的功能也移往Helm客户端，从而不必再用到Tiller组件。
+
+​	事实上，由于Tiller拥有管理Kubernetes集群的密钥，在集群内公开了无须身份验证的gRPC端点且又无法在客户端用户上实现RBAC方式的授权管理功能，从而为Kubernetes集群引入了许多不确定的安全风险。因而，移除Tiller也是势在必行。好在，Helm的优势都基本保持未变。
